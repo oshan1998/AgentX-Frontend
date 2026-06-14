@@ -73,11 +73,223 @@
   border-bottom-left-radius: 4px;
 }
 
+.chat-input-footer {
+  border-top: 1px solid var(--panel-border);
+}
+
+/* Knowledge Base panel (sidebar) */
+.knowledge-base-panel {
+  margin: 0 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.kb-upload-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px dashed rgba(99, 102, 241, 0.4);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.kb-upload-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(99, 102, 241, 0.65);
+  color: white;
+}
+
+.kb-upload-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kb-upload-hint {
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.kb-upload-error {
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: rgb(251, 113, 133);
+}
+
+.kb-empty {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.kb-doc-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.kb-doc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-border);
+}
+
+.kb-doc-name {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-doc-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.kb-doc-status {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.kb-doc-status-ready { color: #6ee7b7; }
+.kb-doc-status-pending { color: #fcd34d; }
+.kb-doc-status-failed { color: #fda4af; }
+
+.kb-doc-size {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.upload-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 0;
+  align-items: center;
+}
+
+.upload-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 220px;
+  padding: 0.25rem 0.5rem 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+}
+
+.upload-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-chip-status {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.upload-chip-ready {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+}
+
+.upload-chip-pending {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+.upload-chip-failed {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.35);
+  color: #fda4af;
+}
+
+.upload-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem;
+  border-radius: 50%;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.upload-chip-remove:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.upload-error {
+  font-size: 0.75rem;
+  color: rgb(251, 113, 133);
+}
+
+.hidden-file-input {
+  display: none;
+}
+
 .chat-input-container {
   padding: 1.25rem;
-  border-top: 1px solid var(--panel-border);
   display: flex;
   gap: 0.75rem;
+  align-items: center;
+}
+
+.attach-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  color: var(--text-secondary);
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.attach-btn:hover:not(:disabled) {
+  border-color: var(--accent-blue);
+  color: white;
+}
+
+.attach-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .chat-input {

@@ -15,6 +15,8 @@ import {
   Plug,
   StopCircle,
 } from 'lucide-react';
+import { uploadCorpusDocument, listCorpusDocuments, type CorpusDocument } from './api/corpus';
+import KnowledgeBasePanel from './KnowledgeBasePanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import IntegrationsModal from './IntegrationsModal';
@@ -77,6 +79,9 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const reasoningEndRef = useRef<HTMLDivElement>(null);
   const chatAbortRef = useRef<AbortController | null>(null);
+  const [corpusDocuments, setCorpusDocuments] = useState<CorpusDocument[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const activeRunIdRef = useRef<string | null>(null);
   const activeSessionRef = useRef(activeSession);
   activeSessionRef.current = activeSession;
@@ -104,7 +109,17 @@ function App() {
   useEffect(() => {
     fetchSessions();
     loadSessionHistory(activeSession);
+    void loadCorpusDocuments();
   }, []);
+
+  const loadCorpusDocuments = async () => {
+    try {
+      const docs = await listCorpusDocuments();
+      setCorpusDocuments(docs);
+    } catch (err) {
+      console.error('Failed to load knowledge base', err);
+    }
+  };
 
   const fetchSessions = async () => {
     try {
@@ -155,6 +170,24 @@ function App() {
     }
   };
 
+  const handleCorpusUpload = async (files: FileList) => {
+    setUploadError(null);
+    setIsUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const saved = await uploadCorpusDocument(file);
+        setCorpusDocuments((prev) => {
+          if (prev.some((p) => p.id === saved.id)) return prev;
+          return [...prev, saved];
+        });
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const isActiveSessionPending =
     pendingChatSessionId !== null && pendingChatSessionId === activeSession;
 
@@ -174,7 +207,7 @@ function App() {
   const handleSend = async () => {
     if (!input.trim() || isActiveSessionPending) return;
 
-    const userMessage = input;
+    const userMessage = input.trim();
     const runId = crypto.randomUUID();
     const sessionForSend = activeSession;
     const ac = new AbortController();
@@ -249,6 +282,7 @@ function App() {
               onClick={() => {
                 const sid = s.id;
                 setActiveSession(sid);
+                setUploadError(null);
                 void loadSessionHistory(sid);
               }}
             >
@@ -257,6 +291,13 @@ function App() {
             </button>
           ))}
         </div>
+
+        <KnowledgeBasePanel
+          documents={corpusDocuments}
+          isUploading={isUploading}
+          uploadError={uploadError}
+          onUpload={handleCorpusUpload}
+        />
 
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5">
@@ -320,10 +361,11 @@ function App() {
           <div ref={messagesEndRef} />
         </section>
 
-        <footer className="chat-input-container">
+        <footer className="chat-input-footer">
+          <div className="chat-input-container">
           <input 
             className="chat-input"
-            placeholder="Type your command..." 
+            placeholder="Ask a question about your documents…" 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -341,6 +383,7 @@ function App() {
           <button className="send-btn" onClick={handleSend} disabled={isActiveSessionPending}>
             <Send size={18} />
           </button>
+          </div>
         </footer>
       </main>
 

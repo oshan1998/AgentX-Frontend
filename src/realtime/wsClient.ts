@@ -21,7 +21,7 @@ export class RealtimeClient {
   private intentionalClose = false;
   private refCount = 0;
 
-  private traceSessionId: string | null = null;
+  private traceSessionIds = new Set<string>();
 
   private readonly messageListeners = new Set<(msg: ServerMessage) => void>();
   private readonly statusListeners = new Set<(s: ConnectionStatus) => void>();
@@ -33,20 +33,34 @@ export class RealtimeClient {
    * Call again when user switches chats.
    */
   subscribeTraceSession(sessionId: string): void {
-    const prevId = this.traceSessionId;
-    this.traceSessionId = sessionId;
-    console.log("🚀 ~ this.traceSessionId:", this.traceSessionId)
+    const prevIds = Array.from(this.traceSessionIds);
+    this.traceSessionIds.clear();
+    this.traceSessionIds.add(sessionId);
+    
     const sock = this.ws;
     if (!sock || sock.readyState !== WebSocket.OPEN) return;
-    if (prevId && prevId !== sessionId) {
-      this.send({ type: 'unsubscribe', payload: { sessionId: prevId } });
+    
+    for (const prevId of prevIds) {
+      if (prevId !== sessionId) {
+        this.send({ type: 'unsubscribe', payload: { sessionId: prevId } });
+      }
     }
     this.send({ type: 'subscribe', payload: { sessionId } });
   }
 
+  subscribeAdditionalSession(sessionId: string): void {
+    if (this.traceSessionIds.has(sessionId)) return;
+    this.traceSessionIds.add(sessionId);
+    
+    const sock = this.ws;
+    if (!sock || sock.readyState !== WebSocket.OPEN) return;
+    this.send({ type: 'subscribe', payload: { sessionId } });
+  }
+
   private resubscribeTraceAfterHello(): void {
-    if (!this.traceSessionId) return;
-    this.send({ type: 'subscribe', payload: { sessionId: this.traceSessionId } });
+    for (const sessionId of this.traceSessionIds) {
+      this.send({ type: 'subscribe', payload: { sessionId } });
+    }
   }
 
   acquire(): void {

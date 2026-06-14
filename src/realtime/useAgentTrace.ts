@@ -35,12 +35,15 @@ export function useReasoningTrace(sessionId: string): {
 
   useEffect(() => {
     return realtimeClient.subscribeMessages((msg) => {
-      console.log("🚀 ~ msg:", msg)
       if (msg.type !== 'agent_trace') return;
       
       const p = msg.payload;
       const isSubSession = p.sessionId.startsWith(`${sessionId}::sub_`);
       if (p.sessionId !== sessionId && !isSubSession) return;
+
+      if (p.step === 'sub_delegate' && p.phase === 'start') {
+        realtimeClient.subscribeAdditionalSession(p.subSessionId);
+      }
 
       const bound = runIdBySessionRef.current.get(p.sessionId);
       if (bound !== undefined && p.runId !== bound) return;
@@ -48,7 +51,6 @@ export function useReasoningTrace(sessionId: string): {
       if (bound === undefined) {
         runIdBySessionRef.current.set(p.sessionId, p.runId);
       }
-      console.log("🚀 ~ p:", p)
       setReasoningSteps((prev) => mergeTraceIntoSteps(prev, p));
     });
   }, [sessionId]);

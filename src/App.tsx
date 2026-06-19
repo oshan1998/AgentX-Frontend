@@ -25,6 +25,13 @@ import type { ConnectionStatus } from './realtime/wsClient';
 import './IntegrationsModal.css';
 import './App.css';
 
+function createRunId(): string {
+  if (typeof crypto?.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 function RealtimeStatusBadge({
   status,
   welcome,
@@ -175,7 +182,7 @@ function App() {
     if (!input.trim() || isActiveSessionPending) return;
 
     const userMessage = input;
-    const runId = crypto.randomUUID();
+    const runId = createRunId();
     const sessionForSend = activeSession;
     const ac = new AbortController();
     chatAbortRef.current = ac;

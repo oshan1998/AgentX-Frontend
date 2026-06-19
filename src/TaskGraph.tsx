@@ -152,16 +152,16 @@ export default function TaskGraph({ sessionId, onClose }: { sessionId: string; o
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="relative w-full h-full max-w-6xl bg-[#0a0c10] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        <header className="flex items-center justify-between p-4 border-b border-slate-800 bg-black/40">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-8 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="relative w-full h-full max-w-6xl bg-[#0a0c10] border border-slate-800 rounded-none sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <header className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-800 bg-black/40 gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500 shrink-0">
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">System Orchestration Graph</h2>
-              <p className="text-xs text-slate-500">Visualizing agentic task dependencies and execution flow</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white truncate">System Orchestration Graph</h2>
+              <p className="text-xs text-slate-500 hidden sm:block">Visualizing agentic task dependencies and execution flow</p>
             </div>
           </div>
           <div className="flex items-center gap-4">

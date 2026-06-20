@@ -73,19 +73,136 @@
   border-bottom-left-radius: 4px;
 }
 
+.chat-input-footer {
+  border-top: 1px solid var(--panel-border);
+}
+
+.upload-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 0;
+  align-items: center;
+}
+
+.upload-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 220px;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+}
+
+.upload-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.upload-chip-remove:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.upload-chip-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.message-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 220px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.upload-error {
+  padding: 0 1.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: rgb(251, 113, 133);
+}
+
+.hidden-file-input {
+  display: none;
+}
+
 .chat-input-container {
   padding: 1.25rem;
-  border-top: 1px solid var(--panel-border);
   display: flex;
   gap: 0.75rem;
+  align-items: center;
+}
+
+.chat-input-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.chat-input-attach {
+  position: absolute;
+  left: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.chat-input-attach:hover:not(:disabled) {
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chat-input-attach:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .chat-input {
-  flex: 1;
+  width: 100%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-sm);
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
   color: white;
   outline: none;
 }

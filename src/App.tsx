@@ -14,7 +14,11 @@ import {
   Loader2,
   Plug,
   StopCircle,
+  Paperclip,
+  X,
 } from 'lucide-react';
+import { sendChat } from './api/chat';
+import { uploadSessionFile } from './api/workspace';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import IntegrationsModal from './IntegrationsModal';
@@ -63,9 +67,20 @@ function RealtimeStatusBadge({
   );
 }
 
+interface MessageAttachment {
+  name: string;
+  path: string;
+}
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  attachments?: MessageAttachment[];
+}
+
+interface PendingAttachment {
+  name: string;
+  path: string;
 }
 
 interface Session {
@@ -84,6 +99,10 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const reasoningEndRef = useRef<HTMLDivElement>(null);
   const chatAbortRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const activeRunIdRef = useRef<string | null>(null);
   const activeSessionRef = useRef(activeSession);
   activeSessionRef.current = activeSession;
@@ -112,6 +131,11 @@ function App() {
     fetchSessions();
     loadSessionHistory(activeSession);
   }, []);
+
+  useEffect(() => {
+    setUploadError(null);
+    setPendingAttachments([]);
+  }, [activeSession]);
 
   const fetchSessions = async () => {
     try {
@@ -165,6 +189,40 @@ function App() {
   const isActiveSessionPending =
     pendingChatSessionId !== null && pendingChatSessionId === activeSession;
 
+  const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files;
+    if (!selected?.length) return;
+
+    setUploadError(null);
+    setIsUploading(true);
+    const sid = activeSession;
+
+    try {
+      const uploaded: PendingAttachment[] = [];
+      for (const file of Array.from(selected)) {
+        const saved = await uploadSessionFile(sid, file);
+        uploaded.push({
+          name: saved.originalName || file.name,
+          path: saved.path,
+        });
+      }
+      if (activeSessionRef.current === sid) {
+        setPendingAttachments((prev) => [...prev, ...uploaded]);
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removePendingAttachment = (path: string) => {
+    setPendingAttachments((prev) => prev.filter((file) => file.path !== path));
+  };
+
   const handleStop = () => {
     if (!isActiveSessionPending) return;
     const runId = activeRunIdRef.current;
@@ -179,35 +237,51 @@ function App() {
   };
 
   const handleSend = async () => {
-    if (!input.trim() || isActiveSessionPending) return;
+    const trimmedInput = input.trim();
+    const attachmentsForSend = [...pendingAttachments];
+    if ((!trimmedInput && attachmentsForSend.length === 0) || isActiveSessionPending) {
+      return;
+    }
 
-    const userMessage = input;
+    const attachmentPaths = attachmentsForSend.map((file) => file.path);
+    const userMessage =
+      trimmedInput ||
+      `Attached: ${attachmentsForSend.map((file) => file.name).join(', ')}`;
     const runId = createRunId();
     const sessionForSend = activeSession;
     const ac = new AbortController();
     chatAbortRef.current = ac;
     activeRunIdRef.current = runId;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setPendingAttachments([]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        content: userMessage,
+        attachments: attachmentsForSend.length > 0 ? attachmentsForSend : undefined,
+      },
+    ]);
     setPendingChatSessionId(sessionForSend);
     beginReasoningRun(sessionForSend, runId);
 
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const data = await sendChat(
+        {
           message: userMessage,
           sessionId: sessionForSend,
           runId,
-        }),
-        signal: ac.signal,
-      });
+          attachmentPaths,
+        },
+        ac.signal,
+      );
 
-      const data = await res.json();
       const stillOwnsView = activeSessionRef.current === sessionForSend;
       if (data.response && stillOwnsView) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: data.response as string },
+        ]);
       }
       void fetchSessions();
     } catch (err) {
@@ -311,6 +385,16 @@ function App() {
                 className={`message ${m.role}`}
               >
                 <ReactMarkdown>{m.content}</ReactMarkdown>
+                {m.attachments?.length ? (
+                  <div className="message-attachments">
+                    {m.attachments.map((file) => (
+                      <span key={file.path} className="message-attachment-chip" title={file.path}>
+                        <Paperclip size={12} />
+                        <span className="upload-chip-name">{file.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </motion.div>
             ))}
           </AnimatePresence>
@@ -327,27 +411,79 @@ function App() {
           <div ref={messagesEndRef} />
         </section>
 
-        <footer className="chat-input-container">
-          <input 
-            className="chat-input"
-            placeholder="Type your command..." 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          />
-          {isActiveSessionPending ? (
-            <button
-              type="button"
-              className="stop-btn"
-              onClick={handleStop}
-              title="Stop agent"
-            >
-              <StopCircle size={18} />
-            </button>
+        <footer className="chat-input-footer">
+          {pendingAttachments.length > 0 ? (
+            <div className="upload-chips-row">
+              {pendingAttachments.map((file) => (
+                <span key={file.path} className="upload-chip" title={file.path}>
+                  <Paperclip size={12} />
+                  <span className="upload-chip-name">{file.name}</span>
+                  <button
+                    type="button"
+                    className="upload-chip-remove"
+                    onClick={() => removePendingAttachment(file.path)}
+                    disabled={isActiveSessionPending}
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
           ) : null}
-          <button className="send-btn" onClick={handleSend} disabled={isActiveSessionPending}>
-            <Send size={18} />
-          </button>
+          {uploadError ? <p className="upload-error">{uploadError}</p> : null}
+          <div className="chat-input-container">
+            <div className="chat-input-wrap">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden-file-input"
+                accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.json,.csv,.html,.htm,.xml"
+                onChange={(e) => void handleFilePick(e)}
+              />
+              <button
+                type="button"
+                className="chat-input-attach"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || isActiveSessionPending}
+                title="Attach file to session workspace"
+              >
+                {isUploading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Paperclip size={18} />
+                )}
+              </button>
+              <input
+                className="chat-input"
+                placeholder="Type your command..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              />
+            </div>
+            {isActiveSessionPending ? (
+              <button
+                type="button"
+                className="stop-btn"
+                onClick={handleStop}
+                title="Stop agent"
+              >
+                <StopCircle size={18} />
+              </button>
+            ) : null}
+            <button
+              className="send-btn"
+              onClick={handleSend}
+              disabled={
+                isActiveSessionPending ||
+                (!input.trim() && pendingAttachments.length === 0)
+              }
+            >
+              <Send size={18} />
+            </button>
+          </div>
         </footer>
       </main>
 

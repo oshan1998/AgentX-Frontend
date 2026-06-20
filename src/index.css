@@ -41,12 +41,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
-  min-height: 100dvh;
-}
-
-#root {
-  min-height: 100dvh;
+  overflow: hidden; /* We'll use panels with their own scroll */
 }
 
 /* Scrollbar styling */

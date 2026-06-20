@@ -12,8 +12,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(520px, calc(100vw - 2rem));
-  max-height: min(80vh, calc(100dvh - 2rem - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)));
+  width: min(520px, 90vw);
+  max-height: 80vh;
   overflow-y: auto;
   z-index: 101;
   background: linear-gradient(160deg, rgba(15, 17, 23, 0.97), rgba(20, 24, 33, 0.97));
@@ -309,27 +309,7 @@
   animation: _spin 1s linear infinite;
 }
 
-@media (max-width: 768px) {
-  .integrations-header {
-    padding: 1rem 1.25rem 0.75rem;
-  }
-
-  .integrations-content {
-    padding: 1rem 1.25rem 1.25rem;
-  }
-
-  .integration-card-header {
-    flex-wrap: wrap;
-    padding: 0.875rem 1rem;
-  }
-
-  .connect-btn,
-  .disconnect-btn {
-    min-height: 44px;
-    width: 100%;
-  }
-
-  .disconnect-btn {
-    align-self: stretch;
-  }
+@keyframes _spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

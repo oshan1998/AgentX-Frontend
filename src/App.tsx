@@ -81,7 +81,6 @@ function App() {
   const [pendingChatSessionId, setPendingChatSessionId] = useState<string | null>(null);
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [showGraph, setShowGraph] = useState(false);
-  const [mobileView, setMobileView] = useState<'sessions' | 'chat' | 'reasoning'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const reasoningEndRef = useRef<HTMLDivElement>(null);
   const chatAbortRef = useRef<AbortController | null>(null);
@@ -132,7 +131,6 @@ function App() {
         setSessions(prev => [{ id: data.id, title: 'New Session' }, ...prev]);
         setActiveSession(data.id);
         setMessages([]);
-        setMobileView('chat');
         void fetchSessions();
       }
     } catch (err) {
@@ -231,7 +229,7 @@ function App() {
   return (
     <div className="app-container">
       {/* Sidebar: Sessions & Navigation */}
-      <aside className={`sidebar glass-panel animate-in ${mobileView === 'sessions' ? 'mobile-active' : ''}`}>
+      <aside className="sidebar glass-panel animate-in">
         <div className="panel-header">
           <div className="flex items-center gap-2">
             <Cpu className="text-blue-500" size={24} />
@@ -259,7 +257,6 @@ function App() {
                 const sid = s.id;
                 setActiveSession(sid);
                 void loadSessionHistory(sid);
-                setMobileView('chat');
               }}
             >
               <MessageSquare size={16} />
@@ -289,25 +286,17 @@ function App() {
       </aside>
 
       {/* Main Chat Area */}
-      <main className={`main-chat glass-panel animate-in ${mobileView === 'chat' ? 'mobile-active' : ''}`}>
+      <main className="main-chat glass-panel animate-in">
         <header className="panel-header">
-          <div className="panel-header-title">
+          <div>
             <h2 className="font-semibold text-lg">
               {sessions.find(s => s.id === activeSession)?.title || activeSession}
             </h2>
             <RealtimeStatusBadge status={realtimeStatus} welcome={realtimeLast?.type === 'welcome' ? realtimeLast.payload : null} />
           </div>
-          <div className="panel-header-actions">
-            <button
-              type="button"
-              className="mobile-reasoning-btn text-slate-400 hover:text-white"
-              title="Reasoning feed"
-              onClick={() => setMobileView('reasoning')}
-            >
-              <Activity size={20} />
-            </button>
-            <button type="button" className="desktop-only text-slate-400 hover:text-white"><Search size={20}/></button>
-            <button type="button" className="desktop-only text-slate-400 hover:text-white"><Clock size={20}/></button>
+          <div className="flex gap-4">
+            <button className="text-slate-400 hover:text-white"><Search size={20}/></button>
+            <button className="text-slate-400 hover:text-white"><Clock size={20}/></button>
           </div>
         </header>
 
@@ -344,12 +333,7 @@ function App() {
             placeholder="Type your command..." 
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                void handleSend();
-              }
-            }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
           {isActiveSessionPending ? (
             <button
@@ -368,7 +352,7 @@ function App() {
       </main>
 
       {/* Right: Reasoning & Logs */}
-      <aside className={`reasoning-panel glass-panel animate-in ${mobileView === 'reasoning' ? 'mobile-active' : ''}`}>
+      <aside className="reasoning-panel glass-panel animate-in">
         <header className="panel-header">
           <div className="flex items-center gap-2 text-slate-300">
             <Activity size={20} />
@@ -430,36 +414,6 @@ function App() {
           </div>
         </div>
       </aside>
-
-      <nav className="mobile-nav" aria-label="Main navigation">
-        <button
-          type="button"
-          className={`mobile-nav-item ${mobileView === 'sessions' ? 'active' : ''}`}
-          onClick={() => setMobileView('sessions')}
-        >
-          <History size={20} />
-          <span>Sessions</span>
-        </button>
-        <button
-          type="button"
-          className={`mobile-nav-item ${mobileView === 'chat' ? 'active' : ''}`}
-          onClick={() => setMobileView('chat')}
-        >
-          <MessageSquare size={20} />
-          <span>Chat</span>
-        </button>
-        <button
-          type="button"
-          className={`mobile-nav-item ${mobileView === 'reasoning' ? 'active' : ''}`}
-          onClick={() => setMobileView('reasoning')}
-        >
-          <Activity size={20} />
-          <span>Reasoning</span>
-          {reasoningSteps.some((s) => s.status === 'active') ? (
-            <span className="mobile-nav-badge" aria-hidden />
-          ) : null}
-        </button>
-      </nav>
 
       {/* Integrations Modal */}
       <IntegrationsModal
